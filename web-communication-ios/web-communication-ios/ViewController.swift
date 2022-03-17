@@ -18,7 +18,17 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate,  WKS
         if(message.name == "callbackHandler"){
             if(message.body as! String == "callNativeFunction"){
                 print("called from javascript")
-                webview.evaluateJavaScript("fromNative('{\"browsers\":{\"firefox\":{\"name\":\"Firefox\",\"pref_url\":\"about:config\",\"releases\":{\"1\":{\"release_date\":\"2004-11-09\",\"status\":\"retired\",\"engine\":\"Gecko\",\"engine_version\":\"1.7\"}}}}}')", completionHandler: {(result, error) in
+                
+                let batteryLevel = floor(UIDevice.current.batteryLevel * 10000)/100
+                
+                let jsonObject:NSMutableDictionary = NSMutableDictionary()
+                jsonObject.setValue(batteryLevel, forKey: "battery")
+                let jsonData = try! JSONSerialization.data(withJSONObject: jsonObject)
+                let jsonString = NSString(data: jsonData, encoding: String.Encoding.utf8.rawValue) as! String
+                print(jsonString)
+                
+                
+                webview.evaluateJavaScript("fromNative('\(jsonString)')", completionHandler: {(result, error) in
                                 if let result = result {
                                     print(result)
                                 }
@@ -26,6 +36,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate,  WKS
                                     print(error)
                                 }
                             })
+                
 
             }
         }
@@ -43,7 +54,8 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate,  WKS
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
-      
+        UIDevice.current.isBatteryMonitoringEnabled = true
+
         // js -> native call
         let contentController = self.webview.configuration.userContentController
         contentController.add(self, name: "callbackHandler")
